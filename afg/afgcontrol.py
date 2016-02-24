@@ -52,6 +52,27 @@ class afg:
         self.minRFAmp = 0.002
 
         self.afgOnPath = "/Experiment/Variables/AFG On"
+        self.afgAddress = "/Experiment/Variables/AFG Addresses/Quadrupole"
+
+        self.varFreqC = "/Experiment/Variables/Center Frequency"
+        self.varFreqMod = "/Experiment/Variables/Frequency Deviation"
+        self.varSpecies = "/Experiment/Variables/Species"
+        self.varCharge = "/Experiment/Variables/Charge"
+
+        self.varNumberPoints = ("/Equipment/TITAN_ACQ/ppg cycle/begin_ramp/" +
+                                "loop count")
+        self.varStartFreq = "/Experiment/Variables/StartFreq (MHz)"
+        self.varStopFreq = "/Experiment/Variables/EndFreq (MHz)"
+
+        self.varFreqList = "/Experiment/Variables/Quad FreqList"
+
+        self.varCalExTime = ("/Experiment/Variables/MPET RF Calibration/" +
+                             "RF Excitation Time (ms)")
+        self.varCalVolatage = ("/Experiment/Variables/MPET RF Calibration" +
+                               "/RF Amplitude (V)")
+        self.varTakeUser = "/Experiment/Edit on Start/Amplitude Override"
+
+        self.varRFUserAmp = "/Experiment/Variables/MPETRFAmp"
         pass
 
     def setip(self, ipAddress):
@@ -65,8 +86,9 @@ class afg:
     #def openConnection(self,ipAddress="142.90.120.108",Port="5024"):
     def openConnection(self, ipAddress="", Port="5024"):
         if ipAddress is "":
-            ipAddress = Midas.varget("/Experiment/Variables/" +
-                                     "AFG Addresses/Quadrupole")
+            #ipAddress = Midas.varget("/Experiment/Variables/" +
+            #                         "AFG Addresses/Quadrupole")
+            ipAddress = Midas.varget(self.afgAddress)
             print ipAddress
         self.setip(ipAddress)
         self.setPort(Port)
@@ -142,7 +164,8 @@ class afg:
         Midas.sendmessage(self.afgName, "AFG is " + statemsg)
 
     def afgStartMenuOnOff(self):
-        userstate = Midas.varget("/Experiment/Variables/AFG On")
+        #userstate = Midas.varget("/Experiment/Variables/AFG On")
+        userstate = Midas.varget(self.afgOnPath)
         userstate = (userstate == 'y')
         self.afgTurnOnOff(userstate)
 
@@ -184,13 +207,16 @@ class afg:
         If any list is too short, the last value in the list is appended
         so that each list is the same length.
         """
-        self.FreqC = str(Midas.varget("/Experiment/Variables/" +
-                                      "Center Frequency"))
+        #self.FreqC = str(Midas.varget("/Experiment/Variables/" +
+        #                              "Center Frequency"))
+        self.FreqC = str(Midas.varget(self.varFreqC))
         self.FreqC = [x.strip() for x in self.FreqC.split(";")]
 
-        temp = Midas.varget("/Experiment/Variables/Species")
+        #temp = Midas.varget("/Experiment/Variables/Species")
+        temp = Midas.varget(self.varSpecies)
         temp = [x.strip() for x in temp.split(";")]
-        self.Charge = Midas.varget("/Experiment/Variables/Charge")
+        #self.Charge = Midas.varget("/Experiment/Variables/Charge")
+        self.Charge = Midas.varget(self.varCharge)
         self.Charge = [x.strip() for x in self.Charge.split(";")]
 
         listmax = max([len(x) for x in [self.FreqC, temp, self.Charge]])
@@ -233,8 +259,9 @@ class afg:
 
         If the variable is empty, set the frequency modulation to zero.
         """
-        self.FreqMod = str(Midas.varget("/Experiment/Variables/" +
-                                        "Frequency Deviation"))
+        #self.FreqMod = str(Midas.varget("/Experiment/Variables/" +
+        #                                "Frequency Deviation"))
+        self.FreqMod = str(Midas.varget(self.varFreqMod))
         try:
             self.FreqMod = [float(x.strip()) for x in self.FreqMod.split(";")]
         except ValueError:
@@ -286,9 +313,11 @@ class afg:
                 self.freqlist.append(str((fstart + j * df) / 1000000.) + "E06")
 
         # Update the start and end frequencies in the odb
-        Midas.varset("/Experiment/Variables/StartFreq (MHz)",
+        #Midas.varset("/Experiment/Variables/StartFreq (MHz)",
+        Midas.varset(self.varStartFreq,
                      (float(self.freqlist[0]) / 1000000.))
-        Midas.varset("/Experiment/Variables/EndFreq (MHz)",
+        #Midas.varset("/Experiment/Variables/EndFreq (MHz)",
+        Midas.varset(self.varStopFreq,
                      (float(self.freqlist[-1]) / 1000000.))
 
         print self.freqlist
@@ -296,7 +325,8 @@ class afg:
                      + str(y) + ", " + str(z) + ")",
                      self.FreqC, self.FreqMod, n)
         fltemp = "; ".join(fltemp)
-        Midas.varset("/Experiment/Variables/Quad FreqList", fltemp)
+        #Midas.varset("/Experiment/Variables/Quad FreqList", fltemp)
+        Midas.varset(self.varFreqList, fltemp)
         return self.freqlist
 
     #def genFreqList_special(self):
@@ -383,16 +413,21 @@ class afg:
 
     def calcRFAmplitude(self):
         ExTime = self.getExcitationTime()
-        calExTime = float(Midas.varget("/Experiment/Variables/" +
-                                       "MPET RF Calibration/" +
-                                       "RF Excitation Time (ms)"))
-        calVoltage = float(Midas.varget("/Experiment/Variables/" +
-                                        "MPET RF Calibration" +
-                                        "/RF Amplitude (V)"))
-        takeUser = Midas.varget("/Experiment/Edit on Start/Amplitude Override")
+        #calExTime = float(Midas.varget("/Experiment/Variables/" +
+        #                               "MPET RF Calibration/" +
+        #                               "RF Excitation Time (ms)"))
+        calExTime = float(Midas.varget(self.varCalExTime))
+        #calVoltage = float(Midas.varget("/Experiment/Variables/" +
+        #                                "MPET RF Calibration" +
+        #                                "/RF Amplitude (V)"))
+        calVoltage = float(Midas.varget(self.varCalVolatage))
+        #takeUser = Midas.varget("/Experiment/Edit on Start/" +
+        #                        "Amplitude Override")
+        takeUser = Midas.varget(self.varTakeUser)
 
         if takeUser == "y":
-            RFAmpCalc = float(Midas.varget("/Experiment/Variables/MPETRFAmp"))
+            #RFAmpCalc = float(Midas.varget("/Experiment/Variables/MPETRFAmp"))
+            RFAmpCalc = float(Midas.varget(self.varRFUserAmp))
         else:
             RFAmpCalc = calVoltage * calExTime / ExTime
             #Midas.varset("/Experiment/Variables/MPETRFAmp", str(RFAmpCalc))
@@ -403,7 +438,9 @@ class afg:
         elif RFAmpCalc > self.maxRFAmp:
             RFAmpCalc = self.maxRFAmp
 
-        Midas.varset("/Experiment/Variables/MPETRFAmp", str(RFAmpCalc))
+        # Update RF amplitude in ODB with the calculated value
+        #Midas.varset("/Experiment/Variables/MPETRFAmp", str(RFAmpCalc))
+        Midas.varset(self.varRFUserAmp, str(RFAmpCalc))
 
         return RFAmpCalc
 
