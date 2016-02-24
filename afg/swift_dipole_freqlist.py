@@ -11,30 +11,48 @@ import calcFreq.calcFreq as CF
 class SwiftDipole(afg):
     def __init__(self):
         afg.__init__(self)
-        #self.openConnection('142.90.119.225')
         afgAddress = Midas.varget("/Experiment/Variables/AFG Addresses/Dipole")
         print afgAddress
-        #self.openConnection('mpetswift')
+
         self.openConnection(ipAddress=afgAddress)
-        #self.afgName = 'swiftdipole'
+
         self.afgName = 'Dipole'
-        self.varOnOff = '/Experiment/Variables/SwiftDipole/RF Amplitude (V)'
+        self.varRFAmp = '/Experiment/Variables/SwiftDipole/RF Amplitude (V)'
         self.varFreqC = ('/Experiment/Variables/SwiftDipole/' +
                          'Center Frequency (Hz)')
         self.varFreqMod = ('/Experiment/Variables/SwiftDipole/' +
                            'Frequency Modulation (Hz)')
         self.varSpecies = '/Experiment/Variables/SwiftDipole/Species'
+        self.varCharge = '/Experiment/Variables/SwiftDipole/Species'
         self.varFreqList = "/Experiment/Variables/Dipole FreqList"
-        #self.afgClear()
-        #self.afgSetSine()
-        #self.afgSetModeList()
+
         self.CF = CF.calcFreq()
         self.CF.getReference()
 
         self.afgOnPath = "/Experiment/Variables/SwiftDipole/AFG On"
 
+        self.varStartFreq = "/Experiment/Variables/StringDump"
+        self.varStopFreq = "/Experiment/Variables/StringDump"
+
+    def afgGetSpecies(self):
+        species = Midas.varget(self.varSpecies).replace("+", "")
+        species = [x.split()[0].strip() for x in species.split(";")]
+        print species
+
+        return species
+
+    def afgGetCharge(self):
+        charge = Midas.varget(self.varCharge).replace("+", "")
+        charge = [x.split()[-1].strip() for x in charge.split(";")]
+        print charge
+
+        return charge
+
+    def afgSetRFAmp(self):
+        self.setAmplitude()
+
     def setAmplitude(self):
-        rfamp = float(Midas.varget(self.varOnOff))
+        rfamp = float(Midas.varget(self.varRFAmp))
         self.RFAmplitude = rfamp
 
         self.RFAmplitude = (self.RFAmplitude
@@ -52,18 +70,3 @@ class SwiftDipole(afg):
             self.afgWrite("OUTP ON")
         else:
             self.afgWrite("OUTP OFF")
-
-    def afgSetFreqList(self):
-        self.afgClear()
-        self.afgSetSine()
-        self.afgSetModeList()
-
-        self.setAmplitude()
-        self.afgOnOff()
-        afglist = self.genFreqList()
-        # Join the list so it is ready for the AFG
-        afglist = ",".join(afglist)
-        self.afgWrite("LIST:FREQ " + afglist)
-        self.freqListMessage()
-
-        self.afgResetTrigger()
